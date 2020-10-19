@@ -3,7 +3,7 @@ from gl import Render, color
 r = Render()
 r.glInit()
 r.glClearColor(1, 0, 0)
-r.glCreateWindow(128, 128)
+r.glCreateWindow(800, 600)
 
 def line(x1, y1, x2, y2):
     dy = (y2 - y1)
@@ -20,7 +20,7 @@ def line(x1, y1, x2, y2):
         y1, y2 = y2, y1
 
     dy = abs(y2 - y1)
-    dx = x2 - x1
+    dx = abs(x2 - x1)
 
     offset = 0 
     threshold = 1 * dx
@@ -36,16 +36,12 @@ def line(x1, y1, x2, y2):
             threshold += 2 * dx
 
 #line(0, 0, 100, 100)
-line(20, 20, 80, 20)
-line(20, 20, 20, 80)
-line(20, 80, 80, 80)
-line(80, 20, 80, 81)
-line(20, 80, 60, 100)
-line(80, 80, 110, 100)
-line(60, 100, 110, 100)
-#line(80, 20, 110, 40)
-#line(110, 40, 110, 100)
-r.point(110, 100)
+line(165, 380, 185, 360)
+line(180, 330, 207, 345)
+line(233, 330, 230, 360)
+line(250, 380, 220, 385)
+line(205, 410, 193, 383)
+
 
 
 r.display()

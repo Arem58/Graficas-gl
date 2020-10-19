@@ -1,4 +1,9 @@
 import struct
+from obj import Obj
+from collections import namedtuple
+
+V2 = namedtuple('Vertex2', ['x', 'y'])
+V3 = namedtuple('Vertex3', ['x', 'y', 'z'])
 
 #se codifica en bytes lo que entre como parametro 
 def char(c):
@@ -17,6 +22,7 @@ def color(r, g, b):
 class Render(object):
     def glInit(self):
         self.framebuffer = []
+        self.currentColor = color(0, 0, 0)
 
     def glCreateWindow(self, width, height):
         self.width = width
@@ -36,25 +42,24 @@ class Render(object):
         self.heightV = heightV
 
     def glVertex(self, y, x):
-        self.Xw = int((x + 1) * (self.widthV * 0.5) + self.x)
-        self.Yw = int((y + 1) * (self.heightV *0.5 ) + self.y)
+        self.Xw = round((x + 1) * (self.widthV * 0.5) + self.x)
+        self.Yw = round((y + 1) * (self.heightV *0.5 ) + self.y)
         if self.Xw == self.widthV: 
             self.Xw -= 1
         if self.Yw == self.heightV: 
             self.Yw -= 1
         self.framebuffer[self.Yw][self.Xw] = self.vertexColor
-        print(self.Yw, self.Xw)
 
     def glClearColor(self, r, g, b):
-        self.r = (int(r * 255))
-        self.g = (int(g * 255))
-        self.b = (int(b * 255))
+        self.r = (round(r * 255))
+        self.g = (round(g * 255))
+        self.b = (round(b * 255))
         self.color = color(self.r, self.g, self.b)
 
     def glColor(self, r, g, b):
-        self.r = (int(r * 255))
-        self.g = (int(g * 255))
-        self.b = (int(b * 255))
+        self.r = (round(r * 255))
+        self.g = (round(g * 255))
+        self.b = (round(b * 255))
         self.vertexColor = color(self.r, self.g, self.b)
 
     def glFinish(self, filename):
@@ -89,6 +94,78 @@ class Render(object):
         
         f.close()
     
+    def load(self, filename, translate, scale):
+        model = Obj(filename)
+
+        for face in model.faces:
+            vcount = len(face) 
+
+            for j in range(vcount):
+                vi1 = face[j][0] - 1
+                vi2 = face[(j + 1) % vcount][0] - 1
+
+                v1 = model.vertices[vi1]
+                v2 = model.vertices[vi2]
+
+                x1 = round(v1[0] * scale[0]) + translate[0] 
+                y1 = round(v1[1] * scale[1]) + translate[1] 
+                x2 = round(v2[0] * scale[0]) + translate[0] 
+                y2 = round(v2[1] * scale[1]) + translate[1] 
+                self.line(V2(x1, y1), V2(x2, y2))
+
+    #carga los vectores y los conbierte en coordenadas x, y
+    def loadPol(self, pol):
+        vcount = len(pol)
+        for i in range(len(pol)):
+            x1 = pol[i][0] 
+            y1 = pol[i][1] 
+            x2 = pol[(i + 1) % vcount][0] 
+            y2 = pol[(i + 1) % vcount][1]
+            self.line(V2(x1, y1), V2(x2, y2))
+        
+
+    def fillPol(self, yMin, yMax, xMin, xMax,borderColor, defaultColor, fillColor, ignoredColor = None):
+        border = []
+        for y in range(yMin, yMax):
+            pair = 0
+            body = 0
+            onBody = False 
+            temp = 0
+            for x in range(xMin, xMax + 1): 
+                #if y == 10:
+                    #print(x)
+                i = x
+                if self.framebuffer[y][x] == borderColor:
+                    if not onBody:
+                        while True:
+                            body += 1
+                            if self.framebuffer[y][i + 1] == defaultColor or ignoredColor:
+                                onBody = True
+                                pair += 1
+                                break
+                            i += 1
+                    body -= 1
+                    if body == 0:
+                        onBody = False
+                        if (pair % 2) == 1:
+                            if self.framebuffer[y][x + 1] == defaultColor or ignoredColor:
+                                temp = V2(x, y)
+                        if (pair % 2) == 0:
+                           if self.framebuffer[y][x - 1] == defaultColor or ignoredColor:
+                                border.append(temp)
+                                border.append(V2(x, y))
+                    else: 
+                        if (pair % 2) == 0:
+                           if self.framebuffer[y][x - 1] == defaultColor:
+                                border.append(temp)
+                                border.append(V2(x, y))
+
+        for i in range(0, len(border), 2):
+            xi = border[i]
+            xf = border[i + 1]
+            for x in range(xi.x + 1, xf.x):
+                self.point(x, (xi.y), fillColor)
+
     #codigo de prueba, Dennis Aldana
     def display(self, filename='out.bmp'):
 
@@ -107,11 +184,18 @@ class Render(object):
         except ImportError:
             pass  # do nothing if no wand is installed
         
-    def point(self, x ,y):
-        self.framebuffer[y][x] = color(0, 0, 0)
+    def point(self, x ,y, color = None):
+        try:
+            self.framebuffer[y][x] = color or self.currentColor
+        except:
+            pass
     
-    def line(self, x1, y1, x2, y2):
-        dy = (y2 - y1)
+    def line(self, A, B):
+        x1 = A.x 
+        y1 = A.y 
+        x2 = B.x
+        y2 = B.y 
+        dy = abs(y2 - y1)
         dx = abs(x2 - x1)
 
         steep = dy > dx
@@ -125,12 +209,12 @@ class Render(object):
             y1, y2 = y2, y1
 
         dy = abs(y2 - y1)
-        dx = x2 - x1
+        dx = abs(x2 - x1)
 
         offset = 0 
-        threshold = 1 * dx
+        threshold = dx
         y = y1
-        for x in range(x1, x2):
+        for x in range(x1, x2 + 1):
             if steep:
                 self.point(y, x)
             else:
@@ -140,29 +224,54 @@ class Render(object):
                 y += 1 if y1 < y2 else -1
                 threshold += 2 * dx
 
+
 bitmap = Render()
-bitmap.glClearColor(1, 0, 0)
+bitmap.glClearColor(1, 0, 1)
 bitmap.glInit()
-bitmap.glCreateWindow(128, 128)
+bitmap.glCreateWindow(800, 600)
 bitmap.glColor(1, 1, 1)
-bitmap.glViewPort(0, 0, 800, 600)
-#bitmap.point(400, 300)
-#bitmap.point(300, 400)
-#for x in range(100):
-    #for y in range(600):
-        #bitmap.point(y, x)
-#bitmap.glVertex(-1, 1)
-bitmap.line(20, 20, 80, 20)
-bitmap.line(20, 20, 20, 80)
-bitmap.line(20, 80, 80, 80)
-bitmap.line(80, 20, 80, 81)
-bitmap.line(20, 80, 60, 100)
-bitmap.line(80, 80, 110, 100)
-bitmap.line(60, 100, 110, 100)
-bitmap.line(80, 20, 110, 40)
-bitmap.line(110, 40, 110, 100)
-bitmap.point(110, 100)
-bitmap.display()
+bitmap.glViewPort(0, 0,400, 300)
+#bitmap.load('./Modelos/face.obj', translate = [400, 300], scale = [20, 20])
+pol1 = [V2(165, 380), V2(185, 360), V2(180, 330), V2(207, 345), V2(233, 330), V2(230, 360), V2(250, 380), V2(220, 385), V2(205, 410), V2(193, 383)]
+pol2 = [V2(321, 335), V2(288, 286), V2(339, 251), V2(374, 302)]
+pol3 = [V2(377, 249), V2(411, 197), V2(436, 249)]
+pol4 = [V2(413, 177), V2(448, 159), V2(502, 88), V2(553, 53), V2(535, 36),
+V2(676, 37), V2(660, 52), V2(750, 145), V2(761, 179), V2(672, 192), 
+V2(659, 214), V2(615, 214), V2(632, 230), V2(580, 230),
+V2(597, 215), V2(552, 214), V2(517, 144), V2(466, 180)]
+pol5 = [V2(682, 175), V2(708, 120), V2(735, 148), V2(739, 170)]
+#bitmap.triangle(V2(10, 70), V2(50, 160), V2(70, 80), color(255, 0, 0))
+#bitmap.triangle(V2(180, 50), V2(150, 1),  V2(70, 180), color(0, 255, 0))
+#bitmap.triangle(V2(180, 150), V2(120, 160), V2(130, 180), color(0, 0, 255))
+bitmap.loadPol(pol4)
+bitmap.loadPol(pol3)
+bitmap.loadPol(pol2)
+bitmap.loadPol(pol1)
+#bitmap.display()
+
+#Cuadrado
+#bitmap.line(V2(2,2), V2(2,18))
+#bitmap.line(V2(18,2), V2(18,18))
+#bitmap.line(V2(2,2), V2(18,2))
+#bitmap.line(V2(2,18), V2(19,18))
+
+#Triangulo
+#bitmap.line(V2(2,2), V2(18,2))
+#bitmap.line(V2(2,2), V2(10,18))
+#bitmap.line(V2(18,2), V2(10,18))
+
+bitmap.fillPol(330, 410, 165, 250, color(0,0,0), color(255, 0, 255), color(0, 255, 0))
+bitmap.fillPol(251, 335, 288, 374, color(0,0,0), color(255, 0, 255), color(255, 255, 0))
+bitmap.fillPol(197, 249, 377, 436, color(0,0,0), color(255, 0, 255), color(0, 255, 255))
+bitmap.fillPol(144, 180, 413, 517, color(0,0,0), color(255, 0, 255), color(0, 0, 255))
+bitmap.fillPol(144, 230, 517, 761, color(0,0,0), color(255, 0, 255), color(0, 0, 255))
+bitmap.fillPol(36, 180, 413, 761, color(0,0,0), color(255, 0, 255), color(0, 0, 255))
+
+bitmap.loadPol(pol5)
+bitmap.fillPol(120, 175, 682, 739, color(0,0,0), color(255, 0, 255), color(255, 255, 255), color(0, 0, 255))
+
+
+
 bitmap.glFinish('out.bmp')
     
 
