@@ -131,7 +131,6 @@ class Render(object):
             body = 0
             onBody = False 
             temp = 0
-            vertex = False
             for x in range(xMin, xMax + 1): 
                 #if y == 10:
                     #print(x)
@@ -164,14 +163,26 @@ class Render(object):
                         #Si es par detecta el ultimo vertice para poder pintar de extremo a extremo 
                         if (pair % 2) == 0:
                             if self.framebuffer[y][x - 1] == defaultColor or ignoredColor:
+                                for j in range(len(pol)):
+                                    if x == pol[j][0] and y == pol[j][1]:
+                                        pair -= 1
                                 #Se agrega a la lista de borde en orden para poder recorrerlo luego
                                 border.append(temp)
                                 border.append(V2(x, y))
                     #Cuando se esta en el cuerpo del borde todavia 
                     else: 
+                        if (pair % 2) == 1:
+                            if self.framebuffer[y][x - 1] == defaultColor or ignoredColor:
+
+                                #Se guarda temporalmente el primer vertice para luego agregarlo a la lista
+                                border.append(V2(x, y))
                         #Si es par detecta el ultimo vertice para poder pintar de extremo a extremo 
                         if (pair % 2) == 0:
-                            if self.framebuffer[y][x - 1] == defaultColor:
+                            if self.framebuffer[y][x - 1] == defaultColor or ignoredColor:
+                                for j in range(len(pol)):
+                                    if x == pol[j][0] and y == pol[j][1]:
+                                        pair -= 1
+                                
                                 #Se agrega a la lista de borde en orden para poder recorrerlo luego
                                 border.append(temp)
                                 border.append(V2(x, y))
@@ -278,7 +289,6 @@ pol5 = [V2(682, 175), V2(708, 120), V2(735, 148), V2(739, 170)]
 bitmap.loadPol(pol4)
 bitmap.loadPol(pol2)
 bitmap.loadPol(pol1)
-
 #Cuadrado
 #bitmap.line(V2(2,2), V2(2,18))
 #bitmap.line(V2(18,2), V2(18,18))
@@ -290,14 +300,14 @@ bitmap.loadPol(pol1)
 #bitmap.line(V2(2,2), V2(10,18))
 #bitmap.line(V2(18,2), V2(10,18))
 
-#bitmap.fillPol(330, 410, 165, 250, color(0,0,0), color(255, 0, 255), color(0, 255, 0), pol1)
-#bitmap.fillPol(250, 336, 288, 374, color(0,0,0), color(255, 0, 255), color(255, 255, 0), pol2)
-#bitmap.fillPol(35, 231, 413, 761, color(0,0,0), color(255, 0, 255), color(0, 0, 255), pol4)
+bitmap.fillPol(330, 410, 165, 250, color(0,0,0), color(255, 0, 255), color(0, 255, 0), pol1)
+bitmap.fillPol(250, 336, 288, 374, color(0,0,0), color(255, 0, 255), color(255, 255, 0), pol2)
+bitmap.fillPol(35, 231, 413, 761, color(0,0,0), color(255, 0, 255), color(0, 0, 255), pol4)
 bitmap.loadPol(pol3)
 bitmap.fillPol(197, 250, 377, 436, color(0,0,0), color(255, 0, 255), color(0, 255, 255), pol3)
 
 bitmap.loadPol(pol5)
-#bitmap.fillPol(120, 176, 682, 739, color(0,0,0), color(255, 0, 255), color(255, 255, 255), color(0, 0, 255))
+bitmap.fillPol(120, 176, 682, 739, color(0,0,0), color(255, 0, 255), color(255, 255, 255), pol5, color(0, 0, 255))
 
 bitmap.display()
 bitmap.glFinish('out.bmp')
