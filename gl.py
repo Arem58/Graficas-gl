@@ -267,6 +267,55 @@ class Render(object):
                 y += 1 if y1 < y2 else -1
                 threshold += 2 * dx
 
+    def triangle(self, A, B, C, color):
+            if A.y > B.y:
+                A, B = B, A
+            if A.y > C.y:
+                A, C = C, A
+            if B.y > C.y:
+                B, C = C, B
+
+            dx_ac = C.x - A.x
+            dy_ac = C.y - A.y
+
+            if dy_ac == 0:
+                return
+
+            mi_ac = dx_ac/dy_ac 
+            
+
+            dx_ab = B.x - A.x
+            dy_ab = B.y - A.y
+
+            if dy_ab != 0:
+                mi_ab = dx_ab/dy_ab  
+                for y in range(A.y, B.y + 1):
+                    xi = round(A.x - mi_ac * (A.y - y))
+                    xf = round(A.x - mi_ab * (A.y - y))
+
+                    if xi > xf:
+                        xi, xf = xf, xi
+
+                    # linea entre xi y xf
+                    for x in range(xi, xf + 1):
+                        self.point(x, y, color)
+
+            dx_bc = C.x - B.x
+            dy_bc = C.y - B.y
+            if dy_bc != 0:
+                mi_bc = dx_bc / dy_bc
+
+                for y in range(B.y, C.y + 1):
+                    xi = round(A.x - mi_ac * (A.y - y))
+                    xf = round(B.x - mi_bc * (B.y - y))
+
+                    if xi > xf:
+                        xi, xf = xf, xi
+
+                    # linea entre xi y xf
+                    for x in range(xi, xf + 1):
+                        self.point(x, y, color)  
+
 
 bitmap = Render()
 bitmap.glClearColor(1, 0, 1)
@@ -275,39 +324,32 @@ bitmap.glCreateWindow(800, 600)
 bitmap.glColor(1, 1, 1)
 bitmap.glViewPort(0, 0,400, 300)
 #bitmap.load('./Modelos/face.obj', translate = [400, 300], scale = [20, 20])
-pol1 = [V2(165, 380), V2(185, 360), V2(180, 330), V2(207, 345), V2(233, 330), V2(230, 360), V2(250, 380), V2(220, 385), V2(205, 410), V2(193, 383)]
-pol2 = [V2(321, 335), V2(288, 286), V2(339, 251), V2(374, 302)]
-pol3 = [V2(377, 249), V2(411, 197), V2(436, 249)]
-pol4 = [V2(413, 177), V2(448, 159), V2(502, 88), V2(553, 53), V2(535, 36),
-V2(676, 37), V2(660, 52), V2(750, 145), V2(761, 179), V2(672, 192), 
-V2(659, 214), V2(615, 214), V2(632, 230), V2(580, 230),
-V2(597, 215), V2(552, 214), V2(517, 144), V2(466, 180)]
-pol5 = [V2(682, 175), V2(708, 120), V2(735, 148), V2(739, 170)]
-#bitmap.triangle(V2(10, 70), V2(50, 160), V2(70, 80), color(255, 0, 0))
-#bitmap.triangle(V2(180, 50), V2(150, 1),  V2(70, 180), color(0, 255, 0))
-#bitmap.triangle(V2(180, 150), V2(120, 160), V2(130, 180), color(0, 0, 255))
-bitmap.loadPol(pol4)
-bitmap.loadPol(pol2)
-bitmap.loadPol(pol1)
-#Cuadrado
-#bitmap.line(V2(2,2), V2(2,18))
-#bitmap.line(V2(18,2), V2(18,18))
-#bitmap.line(V2(2,2), V2(18,2))
-#bitmap.line(V2(2,18), V2(19,18))
 
-#Triangulo
-#bitmap.line(V2(2,2), V2(18,2))
-#bitmap.line(V2(2,2), V2(10,18))
-#bitmap.line(V2(18,2), V2(10,18))
+bitmap.triangle(V2(10, 70), V2(50, 160), V2(70, 80), color(255, 0, 0))
+bitmap.triangle(V2(180, 50), V2(150, 1),  V2(70, 180), color(0, 255, 0))
+bitmap.triangle(V2(180, 150), V2(120, 160), V2(130, 180), color(0, 0, 255))
 
-bitmap.fillPol(330, 410, 165, 250, color(0,0,0), color(255, 0, 255), color(0, 255, 0), pol1)
-bitmap.fillPol(250, 336, 288, 374, color(0,0,0), color(255, 0, 255), color(255, 255, 0), pol2)
-bitmap.fillPol(35, 231, 413, 761, color(0,0,0), color(255, 0, 255), color(0, 0, 255), pol4)
-bitmap.loadPol(pol3)
-bitmap.fillPol(197, 250, 377, 436, color(0,0,0), color(255, 0, 255), color(0, 255, 255), pol3)
 
-bitmap.loadPol(pol5)
-bitmap.fillPol(120, 176, 682, 739, color(0,0,0), color(255, 0, 255), color(255, 255, 255), pol5, color(0, 0, 255))
+#Laboratorio 1 Fill any polygons 
+
+#pol1 = [V2(165, 380), V2(185, 360), V2(180, 330), V2(207, 345), V2(233, 330), V2(230, 360), V2(250, 380), V2(220, 385), V2(205, 410), V2(193, 383)]
+#pol2 = [V2(321, 335), V2(288, 286), V2(339, 251), V2(374, 302)]
+#pol3 = [V2(377, 249), V2(411, 197), V2(436, 249)]
+#pol4 = [V2(413, 177), V2(448, 159), V2(502, 88), V2(553, 53), V2(535, 36),
+#V2(676, 37), V2(660, 52), V2(750, 145), V2(761, 179), V2(672, 192), 
+#V2(659, 214), V2(615, 214), V2(632, 230), V2(580, 230),
+#V2(597, 215), V2(552, 214), V2(517, 144), V2(466, 180)]
+#pol5 = [V2(682, 175), V2(708, 120), V2(735, 148), V2(739, 170)]
+#bitmap.loadPol(pol4)
+#bitmap.loadPol(pol2)
+#bitmap.loadPol(pol1)
+#bitmap.fillPol(330, 410, 165, 250, color(0,0,0), color(255, 0, 255), color(0, 255, 0), pol1)
+#bitmap.fillPol(250, 336, 288, 374, color(0,0,0), color(255, 0, 255), color(255, 255, 0), pol2)
+#bitmap.fillPol(35, 231, 413, 761, color(0,0,0), color(255, 0, 255), color(0, 0, 255), pol4)
+#bitmap.loadPol(pol3)
+#bitmap.fillPol(197, 250, 377, 436, color(0,0,0), color(255, 0, 255), color(0, 255, 255), pol3)
+#bitmap.loadPol(pol5)
+#bitmap.fillPol(120, 176, 682, 739, color(0,0,0), color(255, 0, 255), color(255, 255, 255), pol5, color(0, 0, 255))
 
 bitmap.display()
 bitmap.glFinish('out.bmp')
