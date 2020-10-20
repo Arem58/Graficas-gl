@@ -123,48 +123,80 @@ class Render(object):
             y2 = pol[(i + 1) % vcount][1]
             self.line(V2(x1, y1), V2(x2, y2))
         
-
-    def fillPol(self, yMin, yMax, xMin, xMax,borderColor, defaultColor, fillColor, ignoredColor = None):
+    #Se agrega los limites de x y y con su maximo y minimo, el color del borde, el color del fondo, el color que va a pintar, el poligono y si es un poligono adentro de otro puedes agregar el color que se ignorara  
+    def fillPol(self, yMin, yMax, xMin, xMax, borderColor, defaultColor, fillColor, pol, ignoredColor = None):
         border = []
         for y in range(yMin, yMax):
             pair = 0
             body = 0
             onBody = False 
             temp = 0
+            vertex = False
             for x in range(xMin, xMax + 1): 
                 #if y == 10:
                     #print(x)
                 i = x
                 if self.framebuffer[y][x] == borderColor:
+                    #Detecta si esta en un borde y ve el tamanio que tiene el borde para poder recorrerlo
                     if not onBody:
                         while True:
+                            #Se le suma 1 al cuerpo para tener el tamanio del cuerpo
                             body += 1
+                            #Se termino de recorrer el borde y ya se llego al fondo de la imagen
                             if self.framebuffer[y][i + 1] == defaultColor or ignoredColor:
                                 onBody = True
+                                #Se tiene un contador para saber si es par o impar para ver si ya estan los dos estremos para pintar
                                 pair += 1
                                 break
+                            #tiene el valor de x para poder ir reccoriendo el borde sin afectar a x 
                             i += 1
+                    #Luego de tener el tamanio del borde se recorre restandole 1 al cuerpo del borde
                     body -= 1
+                    #Cuando se esta en el ultimo bloque del borde o un borde de un cuadro
                     if body == 0:
                         onBody = False
+                        #Si es impar detecta el primer vertice
                         if (pair % 2) == 1:
                             if self.framebuffer[y][x + 1] == defaultColor or ignoredColor:
-                                temp = V2(x, y)
-                        if (pair % 2) == 0:
-                           if self.framebuffer[y][x - 1] == defaultColor or ignoredColor:
-                                border.append(temp)
-                                border.append(V2(x, y))
-                    else: 
-                        if (pair % 2) == 0:
-                           if self.framebuffer[y][x - 1] == defaultColor:
-                                border.append(temp)
-                                border.append(V2(x, y))
 
-        for i in range(0, len(border), 2):
+                                #Se guarda temporalmente el primer vertice para luego agregarlo a la lista
+                                temp = V2(x, y)
+                        #Si es par detecta el ultimo vertice para poder pintar de extremo a extremo 
+                        if (pair % 2) == 0:
+                            if self.framebuffer[y][x - 1] == defaultColor or ignoredColor:
+                                #Se agrega a la lista de borde en orden para poder recorrerlo luego
+                                border.append(temp)
+                                border.append(V2(x, y))
+                    #Cuando se esta en el cuerpo del borde todavia 
+                    else: 
+                        #Si es par detecta el ultimo vertice para poder pintar de extremo a extremo 
+                        if (pair % 2) == 0:
+                            if self.framebuffer[y][x - 1] == defaultColor:
+                                #Se agrega a la lista de borde en orden para poder recorrerlo luego
+                                border.append(temp)
+                                border.append(V2(x, y))
+        #Funcion para pintar recorriendo la lista del borde
+        for i in range(len(border) - 1):
             xi = border[i]
             xf = border[i + 1]
+            #Se recorre de liminte inicial a final para pintar lineas horizontales
             for x in range(xi.x + 1, xf.x):
-                self.point(x, (xi.y), fillColor)
+                borderSup = False
+                borderInf = False
+                #Se detecta si el pixel que se va a pintar tiene borde inferior para ver si esta adentro del poligono
+                for y in range(xi.y, yMin, -1):
+                    if self.framebuffer[y][x] == borderColor:
+                        borderInf = True
+                #Se detecta si el pixel que se va a pintar tiene borde superior para ver si esta adentro del poligono
+                for y in range(xi.y, yMax):
+                    if self.framebuffer[y][x] == borderColor:
+                        borderSup = True
+                #Se detecta si tiene los 2 border para estar encerrado 
+                if borderInf == True and borderSup == True:
+                    #Pinta solo si detecta el fondo de la imagen o el color ignorado
+                    if self.framebuffer[xi.y][x] == defaultColor or ignoredColor:
+                        #Pinta el pixel
+                        self.point(x, (xi.y), fillColor)
 
     #codigo de prueba, Dennis Aldana
     def display(self, filename='out.bmp'):
@@ -244,10 +276,8 @@ pol5 = [V2(682, 175), V2(708, 120), V2(735, 148), V2(739, 170)]
 #bitmap.triangle(V2(180, 50), V2(150, 1),  V2(70, 180), color(0, 255, 0))
 #bitmap.triangle(V2(180, 150), V2(120, 160), V2(130, 180), color(0, 0, 255))
 bitmap.loadPol(pol4)
-bitmap.loadPol(pol3)
 bitmap.loadPol(pol2)
 bitmap.loadPol(pol1)
-#bitmap.display()
 
 #Cuadrado
 #bitmap.line(V2(2,2), V2(2,18))
@@ -260,18 +290,16 @@ bitmap.loadPol(pol1)
 #bitmap.line(V2(2,2), V2(10,18))
 #bitmap.line(V2(18,2), V2(10,18))
 
-bitmap.fillPol(330, 410, 165, 250, color(0,0,0), color(255, 0, 255), color(0, 255, 0))
-bitmap.fillPol(251, 335, 288, 374, color(0,0,0), color(255, 0, 255), color(255, 255, 0))
-bitmap.fillPol(197, 249, 377, 436, color(0,0,0), color(255, 0, 255), color(0, 255, 255))
-bitmap.fillPol(144, 180, 413, 517, color(0,0,0), color(255, 0, 255), color(0, 0, 255))
-bitmap.fillPol(144, 230, 517, 761, color(0,0,0), color(255, 0, 255), color(0, 0, 255))
-bitmap.fillPol(36, 180, 413, 761, color(0,0,0), color(255, 0, 255), color(0, 0, 255))
+#bitmap.fillPol(330, 410, 165, 250, color(0,0,0), color(255, 0, 255), color(0, 255, 0), pol1)
+#bitmap.fillPol(250, 336, 288, 374, color(0,0,0), color(255, 0, 255), color(255, 255, 0), pol2)
+#bitmap.fillPol(35, 231, 413, 761, color(0,0,0), color(255, 0, 255), color(0, 0, 255), pol4)
+bitmap.loadPol(pol3)
+bitmap.fillPol(197, 250, 377, 436, color(0,0,0), color(255, 0, 255), color(0, 255, 255), pol3)
 
 bitmap.loadPol(pol5)
-bitmap.fillPol(120, 175, 682, 739, color(0,0,0), color(255, 0, 255), color(255, 255, 255), color(0, 0, 255))
+#bitmap.fillPol(120, 176, 682, 739, color(0,0,0), color(255, 0, 255), color(255, 255, 255), color(0, 0, 255))
 
-
-
+bitmap.display()
 bitmap.glFinish('out.bmp')
     
 
